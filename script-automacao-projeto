@@ -3,20 +3,17 @@
 # Interrompe a execução caso ocorra algum erro inesperado em comandos críticos
 set -e
 
+# Garante que o Git está instalado na EC2
 sudo apt update && sudo apt upgrade -y #Atualizando pacotes do sistema 
-
-sudo apt install -y docker.io #Instalando o Docker
+sudo apt install -y docker.io git #Instalando o Docker e Git
 
 docker --version #Verificando versão do Docker
 
 sudo systemctl start docker #Iniciando Serviço do Docker
-
 sudo systemctl enable docker #Habilitando o Docker 
 
 sudo docker pull python:3.10-slim #Criando a imagem do Python 
-
 sudo docker pull openjdk:17-jdk-slim #Criando a imagem do Java
-
 sudo docker pull mysql:8.0 #Criando a imagem do Banco de Dados 
 
 sudo docker images #Verificando a criação das imagens 
@@ -33,13 +30,12 @@ else
 fi
 
 sudo docker run --rm python:3.10-slim python3 --version # Criando container Python
-
 sudo docker run --rm openjdk:17-jdk-slim java -version # Criando container Java
 
 if [ $? -eq 0 ]; then
     echo "[SUCESSO] - Containers base de Python e Java rodaram perfeitamente!"
 else
-    echo "[ERRO]  - Falha ao rodar os containers base."
+    echo "[ERRO] - Falha ao rodar os containers base."
     exit 1
 fi
 
@@ -50,12 +46,9 @@ if [ -d "$PASTA_PROJETO" ]; then
     echo "O repositório já foi clonado"
     cd $PASTA_PROJETO
     git pull
-    npm start
 else
     git clone $REPO_URL
     cd $PASTA_PROJETO
-    npm i
-    npm start
 fi
 
 if [ -f "Dockerfile" ]; then # Criando a imagem Docker do Projeto
@@ -68,18 +61,18 @@ fi
 IMG_SITE=$(sudo docker image ls -q --filter "reference=img-site-grupo10:latest")
 
 if [ -n "$IMG_SITE" ]; then #Conferindo se a imagem Docker foi criada 
-    echo "[SUCESSO]- Imagem 'img-site-grupo10:latest' criada com sucesso!"
+    echo "[SUCESSO] - Imagem 'img-site-grupo10:latest' criada com sucesso!"
 else
     echo "[ERRO] - A imagem da API/Site do grupo não foi criada."
     exit 1
 fi
 
 #Criando e Conectando os Containers do site e do banco
-sudo docker network create rede-grupo10 
+sudo docker network create rede-grupo10 >/dev/null 2>&1 || true
 
-# Limpa execuções anteriores se existirem
-sudo docker stop container-banco-grupo10 container-site-grupo10 
-sudo docker rm container-banco-grupo10 container-site-grupo10 
+# Limpa execuções anteriores se existirem (evita erro se não existirem)
+sudo docker stop container-banco-grupo10 container-site-grupo10 >/dev/null 2>&1 || true
+sudo docker rm container-banco-grupo10 container-site-grupo10 >/dev/null 2>&1 || true
 
 # Subindo o container do Banco de Dados
 sudo docker run -d \
@@ -102,7 +95,7 @@ sudo docker run -d \
   img-site-grupo10:latest
 
 #Conferindo se tudo foi criado corretamente
-
+sleep 3
 
 STATUS_BANCO=$(sudo docker ps -q --filter "name=container-banco-grupo10" --filter "status=running")
 STATUS_SITE=$(sudo docker ps -q --filter "name=container-site-grupo10" --filter "status=running")
