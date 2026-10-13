@@ -26,9 +26,9 @@ IMG_JV=$(sudo docker image ls -q --filter "reference=openjdk:17-jdk-slim")
 IMG_DB=$(sudo docker image ls -q --filter "reference=mysql:8.0")
 
 if [ -n "$IMG_PY" ] && [ -n "$IMG_JV" ] && [ -n "$IMG_DB" ]; then
-    echo "[SUCESSO] IF - Todas as imagens foram instaladas corretamente!"
+    echo "[SUCESSO] - Todas as imagens foram instaladas corretamente!"
 else
-    echo "[ERRO] IF - Uma ou mais imagens base falharam ao ser baixadas."
+    echo "[ERRO] - Uma ou mais imagens base falharam ao ser baixadas."
     exit 1
 fi
 
@@ -37,9 +37,9 @@ sudo docker run --rm python:3.10-slim python3 --version # Criando container Pyth
 sudo docker run --rm openjdk:17-jdk-slim java -version # Criando container Java
 
 if [ $? -eq 0 ]; then
-    echo "[SUCESSO] IF - Containers base de Python e Java rodaram perfeitamente!"
+    echo "[SUCESSO] - Containers base de Python e Java rodaram perfeitamente!"
 else
-    echo "[ERRO] IF - Falha ao rodar os containers base."
+    echo "[ERRO]  - Falha ao rodar os containers base."
     exit 1
 fi
 
@@ -50,9 +50,12 @@ if [ -d "$PASTA_PROJETO" ]; then
     echo "O repositório já foi clonado"
     cd $PASTA_PROJETO
     git pull
+    npm start
 else
     git clone $REPO_URL
     cd $PASTA_PROJETO
+    npm i
+    npm start
 fi
 
 if [ -f "Dockerfile" ]; then # Criando a imagem Docker do Projeto
@@ -65,18 +68,18 @@ fi
 IMG_SITE=$(sudo docker image ls -q --filter "reference=img-site-grupo10:latest")
 
 if [ -n "$IMG_SITE" ]; then #Conferindo se a imagem Docker foi criada 
-    echo "[SUCESSO] IF - Imagem 'img-site-grupo10:latest' criada com sucesso!"
+    echo "[SUCESSO]- Imagem 'img-site-grupo10:latest' criada com sucesso!"
 else
-    echo "[ERRO] IF - A imagem da API/Site do grupo não foi criada."
+    echo "[ERRO] - A imagem da API/Site do grupo não foi criada."
     exit 1
 fi
 
 #Criando e Conectando os Containers do site e do banco
-sudo docker network create rede-grupo10 > /dev/null 2>&1 || true
+sudo docker network create rede-grupo10 
 
 # Limpa execuções anteriores se existirem
-sudo docker stop container-banco-grupo10 container-site-grupo10 > /dev/null 2>&1 || true
-sudo docker rm container-banco-grupo10 container-site-grupo10 > /dev/null 2>&1 || true
+sudo docker stop container-banco-grupo10 container-site-grupo10 
+sudo docker rm container-banco-grupo10 container-site-grupo10 
 
 # Subindo o container do Banco de Dados
 sudo docker run -d \
@@ -99,7 +102,7 @@ sudo docker run -d \
   img-site-grupo10:latest
 
 #Conferindo se tudo foi criado corretamente
-sleep 3
+
 
 STATUS_BANCO=$(sudo docker ps -q --filter "name=container-banco-grupo10" --filter "status=running")
 STATUS_SITE=$(sudo docker ps -q --filter "name=container-site-grupo10" --filter "status=running")
